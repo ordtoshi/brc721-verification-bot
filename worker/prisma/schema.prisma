@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id      String @id @default(cuid())
+  userId  String
+  address String
+  guildId String
+
+  createdAt DateTime @default(now())
+  Guild     Guild    @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  @@unique([guildId, address])
+}
+
+model Guild {
+  guildId   String   @id
+  channel   String
+  createdAt DateTime @default(now())
+  Job       Job[]
+  Roles     Role[]
+}
+
+model Role {
+  id           String   @id @default(cuid())
+  roleId       String
+  roleName     String
+  collectionId String
+  createdAt    DateTime @default(now())
+  guildId      String
+  guild        Guild    @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  @@unique([guildId, collectionId, roleId])
+}

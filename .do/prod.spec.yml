@@ -1,0 +1,97 @@
+name: brc721-verification
+region: nyc
+databases:
+  - engine: PG
+    name: pg
+    version: "12"
+    cluster_name: verification
+  - engine: REDIS
+    name: redis
+    production: true
+    cluster_name: verification
+envs:
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: ${pg.DATABASE_URL}
+  - key: DISCORD_APP_ID
+    scope: RUN_TIME
+    value: 
+  - key: DISCORD_TOKEN
+    scope: RUN_TIME
+    value: 
+  - key: REDIS_PORT
+    scope: RUN_TIME
+    value: ${redis.PORT}
+  - key: REDIS_HOST
+    scope: RUN_TIME
+    value: ${redis.HOSTNAME}
+  - key: REDIS_PASSWORD
+    scope: RUN_TIME
+    value: ${redis.PASSWORD}
+  - key: REDIS_USER
+    scope: RUN_TIME
+    value: ${redis.USERNAME}
+  - key: NEXT_PUBLIC_API
+    scope: RUN_AND_BUILD_TIME
+    value: ${server.PUBLIC_URL}
+  - key: FE_URL
+    scope: RUN_TIME
+    value: ${client.PUBLIC_URL}
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    run_command: npx prisma migrate deploy
+    source_dir: /server
+    github:
+      branch: main
+      repo: d3vx-com/brc721-verification-bot
+workers:
+  - name: queue-worker
+    instance_count: 1
+    source_dir: worker
+    run_command: npm start
+    environment_slug: node-js
+    build_command: npm run build
+    instance_size_slug: basic-xxs
+    envs:
+      - key: API
+        scope: RUN_TIME
+        value: https://brc721.rest/
+      - key: HIRO_API
+        scope: RUN_TIME
+        value: https://api.hiro.so/ordinals/v1
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: d3vx-com/brc721-verification-bot
+services:
+  - name: server
+    http_port: 4001
+    instance_count: 1
+    run_command: npm start
+    environment_slug: node-js
+    instance_size_slug: basic-xxs
+    build_command: npm run build
+    routes:
+      - path: /server
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: d3vx-com/brc721-verification-bot
+    source_dir: server
+  - name: client
+    http_port: 4000
+    instance_count: 1
+    run_command: npm start
+    environment_slug: node-js
+    build_command: npm run build
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: d3vx-com/brc721-verification-bot
+    source_dir: client
