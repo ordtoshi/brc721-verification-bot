@@ -16,10 +16,8 @@ spec:
       value: ${pg.DATABASE_URL}
     - key: DISCORD_APP_ID
       scope: RUN_TIME
-      value: 
     - key: DISCORD_TOKEN
       scope: RUN_TIME
-      value: 
     - key: REDIS_PORT
       scope: RUN_TIME
       value: ${redis.PORT}
