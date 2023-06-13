@@ -6,3 +6,5 @@
 **DEPLOY:**
 1. Run `doctl apps create --spec ./.do/prod.spec.yml`
 2. Set `DISCORD_APP_ID` and `DISCORD_TOKEN` envs on DO app settings
+
+> NOTE: ESTIMATED MONTHLY APP COST IS $22.00 - $27.00
