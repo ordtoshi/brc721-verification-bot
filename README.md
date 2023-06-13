@@ -1,3 +1,8 @@
-[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/d3vx-com/brc721-verification-bot/tree/main&refcode=fd492ca49952)
+**PREREQUISITES:**
+1. Discord application
+2. DigitalOcean account (use [referral link](https://m.do.co/c/fd492ca49952) to get 200$)
+3. Installed [doctl](https://docs.digitalocean.com/reference/doctl/how-to/install)
 
-> NOTE: set `DISCORD_APP_ID` and `DISCORD_TOKEN` on DO app settings after deployment
+**DEPLOY:**
+1. Run `doctl apps create --spec ./.do/prod.spec.yml`
+2. Set `DISCORD_APP_ID` and `DISCORD_TOKEN` envs on DO app settings
