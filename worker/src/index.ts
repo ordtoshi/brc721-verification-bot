@@ -187,14 +187,16 @@ const worker = new Worker(
         });
 
         if (obtainedRoles.length) {
-          await prisma.job
-            .create({
-              data: { userId, address, Guild: { connect: { guildId } } },
-            })
-            .catch((err) => {
-              console.error("CREATE GUILD MEMBER", err);
-              throw new Error("CREATE GUILD MEMBER");
-            });
+          if (!Job) {
+            await prisma.job
+              .create({
+                data: { userId, address, Guild: { connect: { guildId } } },
+              })
+              .catch((err) => {
+                console.error("CREATE JOB", err);
+                throw new Error("CREATE JOB");
+              });
+          }
 
           const rolesToRemove = roles.filter(
             (r) => !obtainedRoles.includes(r.roleId)
