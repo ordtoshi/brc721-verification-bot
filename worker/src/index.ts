@@ -142,15 +142,14 @@ const worker = new Worker(
         });
 
         if (Job) {
-          if (Job.userId === userId) {
-            throw new Error("ALREADY ADDED");
+          if (Job.userId !== userId) {
+            await prisma.job
+              .delete({ where: { guildId_address: { guildId, address } } })
+              .catch((err) => {
+                console.error("DELETE SAME ADDY MEMBER", err);
+                throw new Error("DELETE SAME ADDY MEMBER");
+              });
           }
-          await prisma.job
-            .delete({ where: { guildId_address: { guildId, address } } })
-            .catch((err) => {
-              console.error("DELETE SAME ADDY MEMBER", err);
-              throw new Error("DELETE SAME ADDY MEMBER");
-            });
         }
 
         const ids = await getInscriptions(address).catch((err) => {
