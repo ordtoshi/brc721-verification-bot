@@ -4,11 +4,12 @@ databases:
   - engine: PG
     name: pg
     version: "12"
-    cluster_name: verification
+    production: true
+    cluster_name: "verification-postgresql"
   - engine: REDIS
     name: redis
     production: true
-    cluster_name: verification
+    cluster_name: "verification-redis"
 envs:
   - key: DATABASE_URL
     scope: RUN_TIME
