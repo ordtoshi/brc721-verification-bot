@@ -20,7 +20,7 @@ gateway.connect();
 const app = express();
 const port = process.env.PORT;
 const limiter = rateLimit({
-  max: 60,
+  max: 5,
   windowMs: 60 * 1000,
   legacyHeaders: false,
   standardHeaders: false,
