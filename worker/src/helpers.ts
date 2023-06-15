@@ -62,7 +62,7 @@ export const hasValid = async (ids: string[], collectionId: string) => {
     const { data } = await api({
       method: "GET",
       url: "inscriptions",
-      params: { ids: chunk.join(","), collectionId },
+      params: { ids: chunk.join(","), collectionId, valid: true },
     }).catch((err) => {
       console.error("QUERY VALID INSCR", err);
       throw new Error("QUERY VALID INSCR");
