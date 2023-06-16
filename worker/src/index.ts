@@ -384,7 +384,7 @@ Error: ${error?.message || "UNKNOWN ERROR. TRY AGAIN"}
       }
     }
   },
-  { connection: REDIS_CONNECTION, concurrency: 1, autorun: false }
+  { connection: REDIS_CONNECTION, concurrency: 1 }
 );
 
 worker.on("error", (error) => {
