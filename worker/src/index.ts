@@ -150,6 +150,7 @@ const worker = new Worker(
             "JOB NOT FOUND",
             "NO ROLES",
             "DELETE JOB",
+            "NO INSCRIPTIONS",
           ].concat(REMOVE_JOB_ERRORS);
 
           if (NO_RETRY_ERRORS.includes(error.message)) {
