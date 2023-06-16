@@ -102,8 +102,17 @@ const worker = new Worker(
           for await (const role of rolesToRemove) {
             await discord.guilds
               .removeRoleFromMember(guildId, userId, role.roleId)
-              .catch((err) => {
+              .catch((err: { code?: number }) => {
                 console.error("ROLE REMOVE", err);
+                if (err?.code === 10004) {
+                  throw new Error("UNKNOWN GUILD");
+                }
+                if (err?.code === 10011) {
+                  throw new Error("UNKNOWN ROLE");
+                }
+                if (err?.code === 10007) {
+                  throw new Error("UNKNOWN MEMBER");
+                }
                 throw new Error("ROLE REMOVE");
               });
           }
@@ -121,8 +130,32 @@ const worker = new Worker(
         return true;
       } catch (error: any) {
         if (error instanceof Error) {
-          const NO_RETRY_ERRORS = ["NO ROLES", "JOB NOT FOUND", "NO ROLES"];
-          if (NO_RETRY_ERRORS.includes(error.message)) return error.message;
+          const REMOVE_JOB_ERRORS = [
+            "UNKNOWN GUILD",
+            "UNKNOWN ROLE",
+            "UNKNOWN MEMBER",
+          ];
+
+          if (REMOVE_JOB_ERRORS.includes(error.message)) {
+            await prisma.job
+              .delete({ where: { id: job.data.id } })
+              .catch((err) => {
+                console.error("DELETE JOB", err);
+                throw new Error("DELETE JOB");
+              });
+          }
+
+          const NO_RETRY_ERRORS = [
+            "NO ROLES",
+            "JOB NOT FOUND",
+            "NO ROLES",
+            "DELETE JOB",
+          ].concat(REMOVE_JOB_ERRORS);
+
+          if (NO_RETRY_ERRORS.includes(error.message)) {
+            return error.message;
+          }
+
           throw new Error(error.message);
         }
         return "UNKNOWN ERROR";
@@ -205,8 +238,17 @@ const worker = new Worker(
           for await (const role of rolesToRemove) {
             await discord.guilds
               .removeRoleFromMember(guildId, userId, role.roleId)
-              .catch((err) => {
+              .catch((err: { code?: number }) => {
                 console.error("ROLE REMOVE", err);
+                if (err?.code === 10004) {
+                  throw new Error("UNKNOWN GUILD");
+                }
+                if (err?.code === 10011) {
+                  throw new Error("UNKNOWN ROLE");
+                }
+                if (err?.code === 10007) {
+                  throw new Error("UNKNOWN MEMBER");
+                }
                 throw new Error("ROLE REMOVE");
               });
           }
