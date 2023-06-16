@@ -14,3 +14,23 @@ type RoleJobOld = {
 };
 
 export type RoleJob = RoleJobNew | RoleJobOld | RoleJobCron;
+
+export type GuildNotFound = {
+  type: "GuildNotFound";
+  guildId: string;
+};
+export type RoleNotFound = {
+  type: "RoleNotFound";
+  guildId: string;
+  roleId: string;
+};
+export type MemberNotFound = {
+  type: "MemberNotFound";
+  guildId: string;
+  userId: string;
+};
+
+export interface NotFoundException {
+  data: GuildNotFound | RoleNotFound | MemberNotFound;
+  discriminator: "NotFoundException";
+}

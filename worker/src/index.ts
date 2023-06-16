@@ -5,10 +5,15 @@ import { EmbedBuilder } from "@discordjs/builders";
 import { MessageFlags, Routes } from "@discordjs/core";
 
 import { cache } from "./cache";
-import { RoleJob } from "./types";
 import { discord } from "./discord";
 import { APPID, REDIS_CONNECTION } from "./constant";
-import { getInscriptions, hasValid } from "./helpers";
+import { RoleJob } from "./types";
+import {
+  errorIsNotFoundException,
+  getInscriptions,
+  getNotFoundException,
+  hasValid,
+} from "./helpers";
 
 dotenv.config();
 
@@ -105,13 +110,24 @@ const worker = new Worker(
               .catch((err: { code?: number }) => {
                 console.error("ROLE REMOVE", err);
                 if (err?.code === 10004) {
-                  throw new Error("UNKNOWN GUILD");
-                }
-                if (err?.code === 10011) {
-                  throw new Error("UNKNOWN ROLE");
+                  throw getNotFoundException({
+                    guildId,
+                    type: "GuildNotFound",
+                  });
                 }
                 if (err?.code === 10007) {
-                  throw new Error("UNKNOWN MEMBER");
+                  throw getNotFoundException({
+                    userId,
+                    guildId,
+                    type: "MemberNotFound",
+                  });
+                }
+                if (err?.code === 10011) {
+                  throw getNotFoundException({
+                    guildId,
+                    type: "RoleNotFound",
+                    roleId: role.roleId,
+                  });
                 }
                 throw new Error("ROLE REMOVE");
               });
@@ -130,34 +146,50 @@ const worker = new Worker(
         return true;
       } catch (error: any) {
         if (error instanceof Error) {
-          const REMOVE_JOB_ERRORS = [
-            "UNKNOWN GUILD",
-            "UNKNOWN ROLE",
-            "UNKNOWN MEMBER",
-          ];
-
-          if (REMOVE_JOB_ERRORS.includes(error.message)) {
-            await prisma.job
-              .delete({ where: { id: job.data.id } })
-              .catch((err) => {
-                console.error("DELETE JOB", err);
-                throw new Error("DELETE JOB");
-              });
-          }
-
           const NO_RETRY_ERRORS = [
             "NO ROLES",
             "JOB NOT FOUND",
-            "NO ROLES",
-            "DELETE JOB",
             "NO INSCRIPTIONS",
-          ].concat(REMOVE_JOB_ERRORS);
+          ];
 
           if (NO_RETRY_ERRORS.includes(error.message)) {
             return error.message;
           }
 
           throw new Error(error.message);
+        }
+        if (errorIsNotFoundException(error)) {
+          const data = error.data;
+          if (data.type === "RoleNotFound") {
+            await prisma.role
+              .deleteMany({
+                where: {
+                  guildId: data.guildId,
+                  roleId: data.roleId,
+                },
+              })
+              .catch();
+            throw new Error("ROLE NOT FOUND");
+          }
+          if (data.type === "MemberNotFound") {
+            await prisma.job
+              .deleteMany({
+                where: {
+                  userId: data.userId,
+                  guildId: data.guildId,
+                },
+              })
+              .catch();
+            return "MEMBER NOT FOUND";
+          }
+          if (data.type === "GuildNotFound") {
+            await prisma.guild
+              .deleteMany({
+                where: { guildId: data.guildId },
+              })
+              .catch();
+            return "GUILD NOT FOUND";
+          }
         }
         return "UNKNOWN ERROR";
       }
@@ -242,13 +274,24 @@ const worker = new Worker(
               .catch((err: { code?: number }) => {
                 console.error("ROLE REMOVE", err);
                 if (err?.code === 10004) {
-                  throw new Error("UNKNOWN GUILD");
-                }
-                if (err?.code === 10011) {
-                  throw new Error("UNKNOWN ROLE");
+                  throw getNotFoundException({
+                    guildId,
+                    type: "GuildNotFound",
+                  });
                 }
                 if (err?.code === 10007) {
-                  throw new Error("UNKNOWN MEMBER");
+                  throw getNotFoundException({
+                    userId,
+                    guildId,
+                    type: "MemberNotFound",
+                  });
+                }
+                if (err?.code === 10011) {
+                  throw getNotFoundException({
+                    guildId,
+                    type: "RoleNotFound",
+                    roleId: role.roleId,
+                  });
                 }
                 throw new Error("ROLE REMOVE");
               });
@@ -294,7 +337,7 @@ const worker = new Worker(
               components: [],
               flags: MessageFlags.Ephemeral,
               content: `<@${userId}>, verification failed!
-Error: ${error?.message || "UNKNOWN ERROR"}
+Error: ${error?.message || "UNKNOWN ERROR. TRY AGAIN"}
             `,
               embeds: [],
             },
@@ -303,12 +346,45 @@ Error: ${error?.message || "UNKNOWN ERROR"}
             console.log("VERIFICATION FAILED REPLY ERROR", error);
           });
 
+        if (errorIsNotFoundException(error)) {
+          const data = error.data;
+          if (data.type === "RoleNotFound") {
+            await prisma.role
+              .deleteMany({
+                where: {
+                  guildId: data.guildId,
+                  roleId: data.roleId,
+                },
+              })
+              .catch();
+          }
+          if (data.type === "MemberNotFound") {
+            await prisma.job
+              .deleteMany({
+                where: {
+                  userId: data.userId,
+                  guildId: data.guildId,
+                },
+              })
+              .catch();
+            return "MEMBER NOT FOUND";
+          }
+          if (data.type === "GuildNotFound") {
+            await prisma.guild
+              .deleteMany({
+                where: { guildId: data.guildId },
+              })
+              .catch();
+            return "GUILD NOT FOUND";
+          }
+        }
+
         if (error instanceof Error) return error.message;
         return "UNKNOWN ERROR";
       }
     }
   },
-  { connection: REDIS_CONNECTION, concurrency: 1 }
+  { connection: REDIS_CONNECTION, concurrency: 1, autorun: false }
 );
 
 worker.on("error", (error) => {

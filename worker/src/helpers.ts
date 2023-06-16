@@ -1,5 +1,11 @@
 import axios from "axios";
 import dotenv from "dotenv";
+import {
+  GuildNotFound,
+  MemberNotFound,
+  NotFoundException,
+  RoleNotFound,
+} from "./types";
 
 dotenv.config();
 
@@ -75,4 +81,14 @@ export const hasValid = async (ids: string[], collectionId: string) => {
   }
 
   return hasValid;
+};
+
+export const getNotFoundException = (
+  data: GuildNotFound | RoleNotFound | MemberNotFound
+) => ({ data, discriminator: "NotFoundException" });
+
+export const errorIsNotFoundException = (
+  error: any
+): error is NotFoundException => {
+  return error?.discriminator === "NotFoundException";
 };
