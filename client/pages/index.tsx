@@ -51,7 +51,7 @@ const Home: NextPage = () => {
             to perform any transactions with your wallet.
           </p>
           {(() => {
-            if (!message.data) {
+            if (message.isError) {
               return (
                 <div className="text-rose-300">
                   Something went wrong! Try again later.
@@ -66,8 +66,7 @@ const Home: NextPage = () => {
                   <a
                     target="_blank"
                     rel="noreferrer"
-                    href="https://ordinalsafe.xyz"
-                  >
+                    href="https://ordinalsafe.xyz">
                     Download from the official page.
                   </a>
                 </div>
@@ -114,8 +113,7 @@ const Home: NextPage = () => {
                     if (!signature) return;
 
                     await verify.mutateAsync(signature);
-                  }}
-                >
+                  }}>
                   Verify tokens
                 </Button>
               );
