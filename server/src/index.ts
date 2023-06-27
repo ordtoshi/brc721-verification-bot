@@ -44,8 +44,10 @@ app.post(
   [validate(schemas.verify), code],
   async (req: Request<any, any, VerifyRequestDto>, res: any) => {
     const message = getCurrentMessage();
-    const { address, signature, code } = req.body;
-    if (!(await verifySig({ message, address, signature }))) {
+    const { address, signature, code, provider, publicKey } = req.body;
+    if (
+      !(await verifySig({ message, address, signature, provider, publicKey }))
+    ) {
       return res.status(400).send({
         message: "Invalid signature",
       });

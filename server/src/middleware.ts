@@ -1,7 +1,10 @@
 import { cache } from "./cache";
 import { ObjectSchema, string, object } from "yup";
 import { NextFunction, Request, Response } from "express";
-import { Network, validate as validateAdd } from "bitcoin-address-validation";
+import {
+  Network,
+  validate as validateAddress,
+} from "bitcoin-address-validation";
 
 export const code = async (req: Request, res: Response, next: NextFunction) => {
   const code = await cache.get(req.body.code);
@@ -19,8 +22,10 @@ export const schemas = {
       .test({
         name: "btc-address",
         message: "Invalid address",
-        test: (value) => validateAdd(value, Network.mainnet),
+        test: (value) => validateAddress(value, Network.mainnet),
       }),
+    provider: string().oneOf(["ordinalsafe", "unisat"]).required(),
+    publicKey: string(),
   }).noUnknown(),
 };
 

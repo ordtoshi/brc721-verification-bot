@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
 import axios from "axios";
+import { verifyMessage } from "@unisat/wallet-utils";
+import { WalletProvider } from "./types";
 
 dotenv.config();
 
@@ -12,24 +14,36 @@ const getNonce = () => {
 export const verifySig = async ({
   message,
   address,
+  provider,
   signature,
+  publicKey,
 }: {
   message: string;
   address: string;
   signature: string;
+  provider: WalletProvider;
+  publicKey?: string;
 }) => {
-  const res = await axios({
-    method: "POST",
-    url: "verifymessage",
-    baseURL: "http://45.55.104.148:3000",
-    data: { address, signature, message },
-  });
+  if (provider === "unisat" && publicKey) {
+    const result = verifyMessage(publicKey, message, signature);
+    return result;
+  }
+  if (provider === "ordinalsafe") {
+    const res = await axios({
+      method: "POST",
+      url: "verifymessage",
+      baseURL: "http://45.55.104.148:3000",
+      data: { address, signature, message },
+    });
 
-  if (res.status !== 200) {
-    throw new Error("Error verifying signature");
+    if (res.status !== 200) {
+      throw new Error("Error verifying signature");
+    }
+
+    return res.data?.result;
   }
 
-  return res.data?.result;
+  return false;
 };
 
 export const getCurrentMessage = () => {

@@ -7,14 +7,26 @@ import type { NextPage } from "next";
 import { useMessage } from "../hooks/useMessage";
 import { useVerify } from "../hooks/useVerify";
 import { Button } from "../components/Button";
+import { useUniSat } from "../hooks/useUniSat";
+
+export type WalletProvider = "ordinalsafe" | "unisat";
 
 const Home: NextPage = () => {
   const message = useMessage();
+  const unisat = useUniSat();
   const wallet = useOrdinalSafe();
   const { query } = useRouter();
 
+  const [provider, setProvider] = React.useState<WalletProvider>();
   const [address, setAddress] = React.useState<string>();
-  const verify = useVerify({ address, code: query.code as string });
+  const [publicKey, setPublicKey] = React.useState<string>();
+
+  const verify = useVerify({
+    address,
+    code: query.code as string,
+    provider,
+    publicKey,
+  });
 
   React.useEffect(() => {
     async function setupAccount(wallet: IWallet) {
@@ -24,10 +36,24 @@ const Home: NextPage = () => {
       }
     }
 
-    if (wallet.wallet) {
-      setupAccount(wallet.wallet);
+    if (provider === "ordinalsafe") {
+      if (wallet.wallet) {
+        setupAccount(wallet.wallet);
+      }
     }
-  }, [wallet.wallet]);
+  }, [wallet.wallet, provider]);
+
+  React.useEffect(() => {
+    if (provider === "unisat") {
+      setAddress(unisat.address);
+    }
+  }, [provider, unisat.address]);
+
+  React.useEffect(() => {
+    if (provider === "unisat") {
+      setPublicKey(unisat.publicKey);
+    }
+  }, [provider, unisat.publicKey]);
 
   return (
     <>
@@ -59,15 +85,40 @@ const Home: NextPage = () => {
               );
             }
 
-            if (wallet.injection.isError) {
+            if (!provider) {
               return (
-                <div className="text-white">
+                <div>
+                  Choose your wallet provider:
+                  <div className="flex gap-4">
+                    <Button onClick={() => setProvider("ordinalsafe")}>
+                      OrdinalSafe
+                    </Button>
+                    <Button onClick={() => setProvider("unisat")}>
+                      UniSat
+                    </Button>
+                  </div>
+                </div>
+              );
+            }
+
+            if (provider === "ordinalsafe" && wallet.injection.isError) {
+              return (
+                <div className="text-white underline">
                   {wallet.injection.error}.{" "}
                   <a
                     target="_blank"
                     rel="noreferrer"
                     href="https://ordinalsafe.xyz">
                     Download from the official page.
+                  </a>
+                </div>
+              );
+            }
+            if (provider === "unisat" && !unisat.unisatInstalled) {
+              return (
+                <div className="text-white underline">
+                  <a target="_blank" rel="noreferrer" href="https://unisat.io">
+                    Download UniSat from the official page.
                   </a>
                 </div>
               );
@@ -79,39 +130,69 @@ const Home: NextPage = () => {
               );
             }
 
-            if (wallet.injection.isSuccess && wallet.initialization.isIdle) {
+            if (
+              provider === "ordinalsafe" &&
+              wallet.injection.isSuccess &&
+              wallet.initialization.isIdle
+            ) {
               return (
-                <Button onClick={wallet.initialize}>Connect wallet</Button>
+                <Button onClick={wallet.initialize}>Connect OrdinalSafe</Button>
               );
             }
 
-            if (wallet.initialization.isSuccess) {
-              if (verify.isSuccess) {
-                return (
-                  <div className="text-white">
-                    Verification submitted! You can now close this window.
-                  </div>
-                );
-              }
+            if (
+              provider === "unisat" &&
+              !unisat.connected &&
+              unisat.unisatInstalled
+            ) {
+              return (
+                <Button
+                  onClick={async () => {
+                    const result = await (
+                      window as any
+                    ).unisat.requestAccounts();
+                    unisat.handleAccountsChanged(result);
+                  }}>
+                  Connect UniSat
+                </Button>
+              );
+            }
 
-              if (verify.isError) {
-                return (
-                  <div className="text-rose-300">
-                    Verification error! Try again later.
-                  </div>
-                );
-              }
+            if (verify.isSuccess) {
+              return (
+                <div className="text-white">
+                  Verification submitted! You can now close this window.
+                </div>
+              );
+            }
 
+            if (verify.isError) {
+              return (
+                <div className="text-rose-300">
+                  Verification error! Try again later.
+                </div>
+              );
+            }
+
+            if (wallet.initialization.isSuccess || unisat.connected) {
               return (
                 <Button
                   disabled={verify.isLoading}
                   onClick={async () => {
-                    const signMessage = wallet.wallet?.signMessage;
-                    if (!signMessage) return;
+                    let signature: string | null = null;
 
-                    const signature = await signMessage(message.data!);
+                    if (provider === "unisat") {
+                      const Unisat = (window as any).unisat;
+                      signature = await Unisat.signMessage(message.data!);
+                    }
+                    if (provider === "ordinalsafe") {
+                      const signMessage = wallet.wallet?.signMessage;
+                      if (!signMessage) return;
+
+                      signature = await signMessage(message.data!);
+                    }
+
                     if (!signature) return;
-
                     await verify.mutateAsync(signature);
                   }}>
                   Verify tokens

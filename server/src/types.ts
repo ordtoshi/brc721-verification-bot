@@ -15,8 +15,12 @@ type RoleJobOld = {
 
 export type RoleJob = RoleJobNew | RoleJobOld | RoleJobCron;
 
+export type WalletProvider = "ordinalsafe" | "unisat";
+
 export type VerifyRequestDto = {
   code: string;
   address: string;
+  provider: WalletProvider;
   signature: string;
+  publicKey: string;
 };

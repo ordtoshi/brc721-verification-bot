@@ -253,6 +253,10 @@ const worker = new Worker(
         });
 
         if (obtainedRoles.length) {
+          await prisma.job.deleteMany({
+            where: { guildId, userId, address: { not: address } },
+          });
+
           if (!Job) {
             await prisma.job
               .create({
