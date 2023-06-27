@@ -160,7 +160,7 @@ const Home: NextPage = () => {
 
             if (verify.isSuccess) {
               return (
-                <div className="text-white">
+                <div className="text-[#ff9900]">
                   Verification submitted! You can now close this window.
                 </div>
               );
