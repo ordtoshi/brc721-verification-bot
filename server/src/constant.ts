@@ -16,7 +16,7 @@ export const APPID = process.env.DISCORD_APP_ID!;
 
 export const COMMANDS: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [
   {
-    name: "bcr721",
+    name: "brc721",
     description: "brc721 commands",
     default_member_permissions: "0",
     type: ApplicationCommandType.ChatInput,
