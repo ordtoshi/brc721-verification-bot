@@ -47,7 +47,7 @@ jobs:
     source_dir: /server
     github:
       branch: main
-      repo: d3vx-com/brc721-verification-bot
+      repo: ordtoshi/brc721-verification-bot
 workers:
   - name: queue-worker
     instance_count: 1
@@ -66,7 +66,7 @@ workers:
     github:
       branch: main
       deploy_on_push: true
-      repo: d3vx-com/brc721-verification-bot
+      repo: ordtoshi/brc721-verification-bot
 services:
   - name: server
     http_port: 4001
@@ -80,7 +80,7 @@ services:
     github:
       branch: main
       deploy_on_push: true
-      repo: d3vx-com/brc721-verification-bot
+      repo: ordtoshi/brc721-verification-bot
     source_dir: server
   - name: client
     http_port: 4000
@@ -94,5 +94,5 @@ services:
     github:
       branch: main
       deploy_on_push: true
-      repo: d3vx-com/brc721-verification-bot
+      repo: ordtoshi/brc721-verification-bot
     source_dir: client
